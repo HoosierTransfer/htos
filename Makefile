@@ -1,5 +1,7 @@
 ASM=nasm
 CC=gcc
+CC16=./openwatcom/binl/wcc
+LD16=./openwatcom/binl/wlink
 
 SRC_DIR=src
 TOOLS_DIR=tools
