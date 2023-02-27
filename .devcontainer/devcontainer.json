@@ -3,6 +3,6 @@
   "features": {
   },
   "remoteEnv": {
-    "PATH": "${containerEnv:PATH}:openwatcom/binl"
+    "PATH": "${containerEnv:PATH}:/workspaces/htos/openwatcom/binl"
   }
 }
