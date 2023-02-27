@@ -1,0 +1,8 @@
+{
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  "features": {
+  },
+  "remoteEnv": {
+    "PATH": "${containerEnv:PATH}:openwatcom/binl"
+  }
+}
