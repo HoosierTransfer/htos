@@ -1,0 +1,87 @@
+Open Watcom Linker Version 2.0 beta Apr  2 2021 00:24:05 (32-bit)
+Copyright (c) 2002-2021 The Open Watcom Contributors. All Rights Reserved.
+Portions Copyright (c) 1985-2002 Sybase, Inc. All Rights Reserved.
+Created on:       23/02/25 16:35:59
+Executable Image: /home/hoosiertransfer/everything/build/stage2.bin
+creating a RAW Binary Image executable
+
+
+                        +------------+
+                        |   Groups   |
+                        +------------+
+
+Group                           Address              Size
+=====                           =======              ====
+
+DGROUP                          0000009e             00000016
+
+
+
+                        +--------------+
+                        |   Segments   |
+                        +--------------+
+
+Segment                Class          Group          Address         Size
+=======                =====          =====          =======         ====
+
+_ENTRY                 CODE           AUTO           00000000        00000013
+_TEXT                  CODE           AUTO           00000013        0000008b
+CONST                  DATA           DGROUP         0000009e        00000016
+CONST2                 DATA           DGROUP         000000b4        00000000
+_DATA                  DATA           DGROUP         000000b4        00000000
+
+
+                        +----------------+
+                        |   Memory Map   |
+                        +----------------+
+
+* = unreferenced symbol
++ = symbol only referenced locally
+
+Address        Symbol
+=======        ======
+
+Module: /home/hoosiertransfer/everything/build/stage2/asm/main.obj(main.asm)
+00000000       entry
+Module: /home/hoosiertransfer/everything/build/stage2/asm/x86.obj(x86.asm)
+00000013       _x86_Video_WriteCharTeletype
+Module: /home/hoosiertransfer/everything/build/stage2/c/main.obj(/home/hoosiertransfer/everything/src/bootloader/stage2/main.c)
+00000026       _cstart_
+Module: /home/hoosiertransfer/everything/build/stage2/c/stdio.obj(/home/hoosiertransfer/everything/src/bootloader/stage2/stdio.c)
+00000040+      putc_
+00000067       puts_
+
+
+                        +---------------------+
+                        |   Module Segments   |
+                        +---------------------+
+
+! = 32-bit segment
+c = initialized communal data
+
+Module          Segment               Class           Address         Size
+======          =======               =====           =======         ====
+
+main.asm        _ENTRY                CODE           00000000         00000013
+x86.asm         _TEXT                 CODE           00000013         00000013
+/home/hoosiertransfer/everything/src/bootloader/stage2/main.c
+                _TEXT                 CODE           00000026         0000001a
+                CONST                 DATA           0000009e         00000016
+                CONST2                DATA           000000b4         00000000
+                _DATA                 DATA           000000b4         00000000
+/home/hoosiertransfer/everything/src/bootloader/stage2/stdio.c
+                _TEXT                 CODE           00000040         0000005e
+                CONST                 DATA           000000b4         00000000
+                CONST2                DATA           000000b4         00000000
+                _DATA                 DATA           000000b4         00000000
+Warning! W1014: stack segment not found
+
+
+                        +-----------------------+
+                        |   Linker Statistics   |
+                        +-----------------------+
+
+Stack size:  0200 (512.)
+Memory size:  00b4 (180.)
+Entry point address: 00000000
+Link time: 00:00.00
