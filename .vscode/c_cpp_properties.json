@@ -11,8 +11,8 @@
                 "_UNICODE",
                 "_cdecl"
             ],
-            "compilerPath": "\\\\wsl$\\Ubuntu\\home\\hoosiertransfer\\everything\\openwatcom\\binl\\wcc",
-            "cStandard": "c17",
+            "compilerPath": "/workspaces/htos/openwatcom/binl/wcc",
+            "cStandard": "c16",
             "cppStandard": "gnu++17",
             "intelliSenseMode": "windows-gcc-x64",
             "configurationProvider": "ms-vscode.makefile-tools"

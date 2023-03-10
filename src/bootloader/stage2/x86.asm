@@ -1,6 +1,35 @@
 bits 16
 
 section _TEXT class=CODE
+;
+; void _cdecl x86_div64_32(uint64_t dividend, uint32_t divisor, uint64_t* quotientOut, uint32_t* remainderOut);
+;
+global _x86_div64_32
+_x86_div64_32:
+    push bp
+    mov bp, sp
+    
+    mov eax, [bp + 4]
+    mov ecx, [bp + 12]
+    xor edx, edx
+    div ecx
+
+    mov bx, [bp + 16]
+    mov [bx], eax
+
+    mov eax, [bp + 4]
+
+    div ecx
+
+    mov [bx], eax
+    mov bx, [bp + 18]
+    mov [bx], edx
+
+    pop bx
+
+    mov sp, bp
+    pop bp
+    ret
 
 ;
 ; int 10h ah=0Eh
