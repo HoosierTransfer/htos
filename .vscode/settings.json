@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "sstream": "cpp",
+        "string_view": "c",
+        "stdio.h": "c",
+        "stdint.h": "c"
+    }
+}

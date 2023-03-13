@@ -1,1 +1,2 @@
-stdio.c(145): Warning! W118: Label 'defualt' has been defined but not referenced
+stdio.c(138): Warning! W201: Unreachable code
+stdio.c(147): Warning! W118: Label 'defualt' has been defined but not referenced
