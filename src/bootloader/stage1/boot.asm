@@ -30,17 +30,8 @@ ebr_drive_number:           db 0                    ; 0x00 floppy, 0x80 hdd, use
                             db 0                    ; reserved
 ebr_signature:              db 29h
 ebr_volume_id:              db 12h, 34h, 56h, 78h   ; serial number, value doesn't matter
-ebr_volume_label:           db 'thing      '        ; 11 bytes, padded with spaces
+ebr_volume_label:           db 'NANOBYTE OS'        ; 11 bytes, padded with spaces
 ebr_system_id:              db 'FAT12   '           ; 8 bytes
-
-
-;
-; Prints a string to the screen
-; Params:
-;   - ds:si points to string
-;
-
-    
 
 start:
     ; setup data segments
@@ -60,7 +51,7 @@ start:
     mov [ebr_drive_number], dl
 
     ; print hello world message
-    mov si, msg_hello
+    mov si, msg_loading
     call puts
 
     push es
@@ -78,7 +69,7 @@ start:
 
     mov ax, [bdb_sectors_per_fat]
     mov bl, [bdb_fat_count]
-    xor ah, ah
+    xor bh, bh
     mul bx
     add ax, [bdb_reserved_sectors]
     push ax
@@ -89,7 +80,7 @@ start:
     div word [bdb_bytes_per_sector]
 
     test dx, dx
-    jnz .root_dir_after
+    jz .root_dir_after
     inc ax
 
 .root_dir_after:
@@ -159,7 +150,7 @@ start:
     mov ax, [ds:si]
 
     or dx, dx
-    js .even
+    jz .even
 
 .odd:
     shr ax, 4
@@ -292,11 +283,11 @@ disk_read:
 .done:
     popa
 
-    pop ax
-    pop bx
-    pop cx
-    pop dx
     pop di
+    pop dx
+    pop cx
+    pop bx
+    pop ax
     ret
 
 disk_reset:
@@ -308,7 +299,7 @@ disk_reset:
     popa
     ret
 
-msg_hello:            db 'Loading...', ENDL, 0
+msg_loading:            db 'Loading...', ENDL, 0
 msg_disk_read_failed:        db 'Read from disk failed!', ENDL, 0
 msg_kernel_not_found:   db 'STAGE2.BIN file not found!', ENDL, 0
 file_kernel_bin:        db 'STAGE2  BIN'

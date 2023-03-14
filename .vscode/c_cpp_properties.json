@@ -1,21 +1,21 @@
 {
     "configurations": [
         {
-            "name": "Win32",
+            "name": "Watcom",
             "includePath": [
                 "${workspaceFolder}/**"
             ],
             "defines": [
-                "_DEBUG",
-                "UNICODE",
-                "_UNICODE",
-                "_cdecl"
+                "_cdecl=",
+                "far="
             ],
             "compilerPath": "/workspaces/htos/openwatcom/binl/wcc",
-            "cStandard": "c16",
-            "cppStandard": "gnu++17",
-            "intelliSenseMode": "windows-gcc-x64",
-            "configurationProvider": "ms-vscode.makefile-tools"
+            "cStandard": "c99",
+            "cppStandard": "c++14",
+            "intelliSenseMode": "clang-x64",
+            "compilerArgs": [
+                "-4 -d3 -s -wx -ms -zl -zq"
+            ]
         }
     ],
     "version": 4
