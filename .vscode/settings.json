@@ -10,6 +10,8 @@
         "cstdlib": "c",
         "cstring": "c",
         "ctime": "c",
-        "cwchar": "c"
+        "cwchar": "c",
+        "memdefs.h": "c",
+        "fat.h": "c"
     }
 }

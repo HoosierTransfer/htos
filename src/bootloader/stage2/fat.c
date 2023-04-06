@@ -1,6 +1,7 @@
 #include "fat.h"
 #include "stdio.h"
 #include "memdefs.h"
+#include "string.h"
 
 #define SECTOR_SIZE 512
 #define MAX_PATH_SIZE 256
@@ -114,7 +115,11 @@ bool fat_Initialize(DISK* disk) {
         g_Data->OpenedFiles[i].Opened = false;
 }
 
-fat_File* fat_Open(DISK* disk, fat_DirectoryEntry* entry) {
+uint32_t fat_ClusterToLba(uint32_t cluster) {
+    return g_DataSectionLba + (cluster - 2) * g_Data->BS.BootSector.SectorsPerCluster;
+}
+
+fat_File far* fat_OpenEntry(DISK* disk, fat_DirectoryEntry* entry) {
     int handle = -1;
     for (int i = 0; i < MAX_FILE_HANDLES && handle < 0; i++) {
         if(!g_Data->OpenedFiles[i].Opened)
@@ -127,13 +132,40 @@ fat_File* fat_Open(DISK* disk, fat_DirectoryEntry* entry) {
     }
 
     fat_FileData far* fd = &g_Data->OpenedFiles[handle];
+    fd->Public.Handle = handle;
+    fd->Public.isDirectory = (entry->Attributes & FAT_ATTRIBUTE_DIRECTORY) != 0;
+    fd->Public.Position = 0;
+    fd->Public.Size = 0;
+    fd->FirstCluster = entry->FirstClusterLow + ((uint32_t)entry->FirstClusterHigh << 16);
+    fd->CurrentCluster = fd->FirstCluster;
+    fd->CurrentSectorInCluster = 0;
+
+    if(!disk_ReadSectors(disk, fat_ClusterToLba(fd->CurrentCluster), 1, fd->Buffer)) {
+        printf("FAT: read error");
+        return false;
+    }
+
+    fd->Opened = true;
+    return &fd->Public;
 }
 
-fat_File* fat_Open(DISK* disk, const char* path) {
+fat_File far* fat_Open(DISK* disk, const char* path) {
     char buffer[MAX_PATH_SIZE];
 
     if (path[0] == '/')
         path++;
+
+
+    fat_File far* parent = NULL;
+    fat_File far* current = &g_Data->RootDirectory.Public;
+
+    while (*path) {
+        const char* delim = strchr(path, '/');
+        if (delim != NULL) {
+            memcpy(name, path, delim - path);
+            path = delim + 1;
+        }
+    }
 }
 
 DirectoryEntry* findFile(const char* name) {

@@ -42,10 +42,12 @@ enum fat_atributes {
 
 bool fat_Initialize(DISK* disk);
 
-fat_File fat_Open(DISK* disk, const char* path);
+fat_File far* fat_Open(DISK* disk, const char* path);
 
-uint32_t fat_Read(DISK* disk, fat_File far* file, uint32_t byteCount, void* dataOut);
-bool fat_ReadEntry(DISK* disk, fat_File far* file, uint32_t byteCount, fat_DirectoryEntry* dataOut);
-void fat_Close(fat_File far* file);
+
+
+// uint32_t fat_Read(DISK* disk, fat_File far* file, uint32_t byteCount, void* dataOut);
+// bool fat_ReadEntry(DISK* disk, fat_File far* file, uint32_t byteCount, fat_DirectoryEntry* dataOut);
+// void fat_Close(fat_File far* file);
 
 
