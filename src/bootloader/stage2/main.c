@@ -1,13 +1,44 @@
-#include "stdint.h"
+#include <stdint.h>
 #include "stdio.h"
+#include "x86.h"
+#include "disk.h"
+#include "fat.h"
+#include "memdefs.h"
+#include "memory.h"
 
-void _cdecl cstart_(uint16_t bootDrive)
+uint8_t* KernelLoadBuffer = (uint8_t*)MEMORY_LOAD_KERNEL;
+uint8_t* Kernel = (uint8_t*)MEMORY_KERNEL_ADDR;
+
+typedef void (*KernelStart)();
+
+void __attribute__((cdecl)) start(uint16_t bootDrive)
 {
-    const char far* far_str = "far string";
+    clrscr();
+    DISK disk;
+    if (!disk_Initialize(&disk, bootDrive))
+    {
+        printf("Disk init error\r\n");
+        goto end;
+    }
 
-    puts("Hello world from C!\r\n");
-    printf("Formatted %% %c %s %ls\r\n", 'a', "string", far_str);
-    printf("Formatted %d %i %x %p %o %hd %hi %hhu %hhd\r\n", 1234, -5678, 0xdead, 0xbeef, 012345, (short)27, (short)-42, (unsigned char)20, (signed char)-10);
-    printf("Formatted %ld %lx %lld %llx\r\n", -100000000l, 0xdeadbeeful, 10200300400ll, 0xdeadbeeffeebdaedull);
+    if (!fat_Initialize(&disk))
+    {
+        printf("FAT init error\r\n");
+        goto end;
+    }
+
+    fat_File* fd = fat_Open(&disk, "/kernel.bin");
+    uint32_t read;
+    uint8_t* kernelBuffer = Kernel;
+    while ((read = fat_Read(&disk, fd, MEMORY_LOAD_SIZE, KernelLoadBuffer)))
+    {
+        memcpy(kernelBuffer, KernelLoadBuffer, read);
+        kernelBuffer += read;
+    }
+    fat_Close(fd);
+
+    KernelStart kernelStart = (KernelStart)Kernel;
+    kernelStart();
+end:
     for (;;);
 }

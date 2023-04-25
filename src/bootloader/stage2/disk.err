@@ -1,4 +1,0 @@
-disk.h(13): Warning! W138: No newline at end of file
-x86.h(12): Warning! W138: No newline at end of file
-disk.c(4): Warning! W303: Parameter 'diskNumber' has been defined, but not referenced
-disk.c(41): Warning! W138: No newline at end of file

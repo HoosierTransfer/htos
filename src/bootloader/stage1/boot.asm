@@ -30,8 +30,10 @@ ebr_drive_number:           db 0                    ; 0x00 floppy, 0x80 hdd, use
                             db 0                    ; reserved
 ebr_signature:              db 29h
 ebr_volume_id:              db 12h, 34h, 56h, 78h   ; serial number, value doesn't matter
-ebr_volume_label:           db 'NANOBYTE OS'        ; 11 bytes, padded with spaces
+ebr_volume_label:           db 'SUSSY OS'        ; 11 bytes, padded with spaces
 ebr_system_id:              db 'FAT12   '           ; 8 bytes
+
+times 90-($-$$) db 0
 
 start:
     ; setup data segments
@@ -54,128 +56,59 @@ start:
     mov si, msg_loading
     call puts
 
-    push es
-    mov ah, 08h
+    mov ah, 0x41
+    mov bx, 0x55AA
+    stc
     int 13h
-    jc floppy_error
-    pop es
+    jc .no_disk_extensions
+    cmp bx, 0xAA55
+    jne .no_disk_extensions
 
-    and cl, 0x3F
+    ; extensions are present
+    mov byte [have_extensions], 1
+    jmp .after_disk_extensions_check
+
+.no_disk_extensions:
+    mov byte [have_extensions], 0
+
+.after_disk_extensions_check:
+    ; load stage2
+    mov si, stage2_location
+
+    mov ax, STAGE2_LOAD_SEGMENT         ; set segment registers
+    mov es, ax
+
+    mov bx, STAGE2_LOAD_OFFSET
+
+.loop:
+    mov eax, [si]
+    add si, 4
+    mov cl, [si]
+    inc si
+
+    cmp eax, 0
+    je .read_finish
+
+    call disk_read
+
     xor ch, ch
-    mov [bdb_sectors_per_track], cx
-
-    inc dh
-    mov [bdb_heads], dh
-
-    mov ax, [bdb_sectors_per_fat]
-    mov bl, [bdb_fat_count]
-    xor bh, bh
-    mul bx
-    add ax, [bdb_reserved_sectors]
-    push ax
-
-    mov ax, [bdb_dir_entries_count]
-    shl ax, 5
-    xor dx, dx
-    div word [bdb_bytes_per_sector]
-
-    test dx, dx
-    jz .root_dir_after
-    inc ax
-
-.root_dir_after:
-
-    mov cl, al
-    pop ax
-    mov dl, [ebr_drive_number]
-    mov bx, buffer
-    call disk_read
-
-    xor bx, bx
-    mov di, buffer
-
-.search_kernel:
-    mov si, file_kernel_bin
-    mov cx, 11
-    push di
-
-    repe cmpsb
-
-    pop di
-    je .found_kernel
-
-    add di, 32
-    inc bx
-    cmp bx, [bdb_dir_entries_count]
-    jl .search_kernel
-
-    jmp kernel_not_found_error
-
-.found_kernel:
-
-    ; di should have the address to the entry
-    mov ax, [di + 26]                   ; first logical cluster field (offset 26)
-    mov [kernel_cluster], ax
-
-    ; load FAT from disk into memory
-    mov ax, [bdb_reserved_sectors]
-    mov bx, buffer
-    mov cl, [bdb_sectors_per_fat]
-    mov dl, [ebr_drive_number]
-    call disk_read
-
-    ; read kernel and process FAT chain
-    mov bx, KERNEL_LOAD_SEGMENT
-    mov es, bx
-    mov bx, KERNEL_LOAD_OFFSET
-
-.load_kernel_loop:
-    mov ax, [kernel_cluster]
-    add ax, 31
-
-    mov cl, 1
-    mov dl, [ebr_drive_number]
-    call disk_read
-
-    add bx, [bdb_bytes_per_sector]
-
-    mov ax, [kernel_cluster]
-    mov cx, 3
-    mul cx
-    mov cx, 2
-    div cx
-
-    mov si, buffer
-    add si, ax
-    mov ax, [ds:si]
-
-    or dx, dx
-    jz .even
-
-.odd:
-    shr ax, 4
-    jmp .next_cluster_after
-
-.even:
-    and ax, 0x0FFF
-
-.next_cluster_after:
-    cmp ax, 0x0FF8
-    jae .read_finish
+    shl cx, 5
+    mov di, es
+    add di, cx
+    mov es, di
     
-    mov [kernel_cluster], ax
-    jmp .load_kernel_loop
+    jmp .loop
 
 .read_finish:
 
 
     mov dl, [ebr_drive_number]
     
-    mov ax, KERNEL_LOAD_SEGMENT
+    mov ax, STAGE2_LOAD_SEGMENT
     mov ds, ax
     mov es, ax
 
-    jmp KERNEL_LOAD_SEGMENT:KERNEL_LOAD_OFFSET
+    jmp STAGE2_LOAD_SEGMENT:STAGE2_LOAD_OFFSET
 
     jmp wait_key_and_reboot
 
@@ -197,7 +130,7 @@ wait_key_and_reboot:
     int 16h
     jmp 0FFFFh:0
 
-.halt
+.halt:
     cli
     hlt
 
@@ -251,11 +184,28 @@ lba_to_chs:
 
 disk_read:
 
-    push ax
+    push eax
     push bx
     push cx
     push dx
+    push si
     push di
+
+    cmp byte [have_extensions], 1
+    jne .no_disk_extensions
+
+    ; with extensions
+    mov [extensions_dap.lba], eax
+    mov [extensions_dap.segment], es
+    mov [extensions_dap.offset], bx
+    mov [extensions_dap.count], cl
+
+    mov ah, 0x42
+    mov si, extensions_dap
+    mov di, 3                           ; retry count
+    jmp .retry
+
+.no_disk_extensions:
 
     push cx
     call lba_to_chs
@@ -284,10 +234,11 @@ disk_read:
     popa
 
     pop di
+    pop si
     pop dx
     pop cx
     pop bx
-    pop ax
+    pop eax
     ret
 
 disk_reset:
@@ -303,13 +254,23 @@ msg_loading:            db 'Loading...', ENDL, 0
 msg_disk_read_failed:        db 'Read from disk failed!', ENDL, 0
 msg_kernel_not_found:   db 'STAGE2.BIN file not found!', ENDL, 0
 file_kernel_bin:        db 'STAGE2  BIN'
-kernel_cluster:         dw 0
 
-KERNEL_LOAD_SEGMENT     equ 0x2000
-KERNEL_LOAD_OFFSET      equ 0
+have_extensions:        db 0
+extensions_dap:
+    .size:              db 10h
+                        db 0
+    .count:             dw 0
+    .offset:            dw 0
+    .segment:           dw 0
+    .lba:               dq 0
+
+STAGE2_LOAD_SEGMENT     equ 0x0
+STAGE2_LOAD_OFFSET      equ 0x500
 
 
-times 510-($-$$) db 0
+times 510-30-($-$$) db 0
+
+stage2_location:        times 30 db 0
 dw 0AA55h
 
 buffer:
